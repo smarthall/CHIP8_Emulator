@@ -364,9 +364,31 @@ namespace CHIP8_Emulator
 				//       N is the number of 8bit rows that need to be drawn.
 				//       If N is greater than 1, second line continues at position VX, VY+1, and so on.
 				
-				// EX9E: Skips the next instruction if the key stored in VX is pressed.
+				// EXXX: Some key dependent routines
+				case 0XE000:
+					x = (byte)((opcode & 0x0F00) >> 8);
+					n = (byte)(opcode & 0x00FF);
 				
-				// EXA1: Skips the next instruction if the key stored in VX isn't pressed.
+					switch (n) {
+						// EX9E: Skips the next instruction if the key stored in VX is pressed.
+						case 0x9E:
+							if (key[V[x]] != 0) {
+								pc += 4;
+							} else {
+								pc += 2;
+							}
+							break;
+				
+						// EXA1: Skips the next instruction if the key stored in VX isn't pressed.
+						case 0xA1:
+							if (key[V[x]] == 0) {
+								pc += 4;
+							} else {
+								pc += 2;
+							}
+							break;
+					}
+					break;
 				
 				// FX07: Sets VX to the value of the delay timer.
 				
