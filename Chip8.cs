@@ -387,6 +387,10 @@ namespace CHIP8_Emulator
 								pc += 2;
 							}
 							break;
+					
+						default:
+							Console.WriteLine("Unknown opcode: 0x{0:X}", opcode);
+							break;
 					}
 					break;
 				
@@ -403,6 +407,25 @@ namespace CHIP8_Emulator
 							break;
 				
 						// FX0A: A key press is awaited, and then stored in VX.
+						case 0x0A:
+							bool pressed = false;
+					
+							for (byte i = 0; i < 0xF; i++) {
+								if (key[i] != 0) {
+									pressed = true;
+									V[x] = i;
+									break;
+								}
+							}
+							
+							if (pressed) {
+								pc += 2;
+							} else {
+								// Dont advance counter/timers until key is pressed.
+								return;
+							}
+					
+							break;
 				
 						// FX15: Sets the delay timer to VX.
 						case 0x15:
@@ -431,17 +454,35 @@ namespace CHIP8_Emulator
 						// FX29: Sets I to the location of the sprite for the character in VX.
 						//       Characters 0-F (in hexadecimal) are represented by a 4x5 font.
 						case 0x29:
-							I = V[x] * 5;
+							I = (ushort)(V[x] * 5);
 							pc += 2;
 							break;
 				
 						// FX33: Stores the Binary-coded decimal representation of VX,
 						//       with the most significant of three digits at the address in I,
 						//       the middle digit at I plus 1, and the least significant digit at I plus 2.
+						case 0x33:
+							memory[I]     = (byte)(V[x] / 100);
+							memory[I + 1] = (byte)(V[x] % 100 / 10);
+							memory[I + 1] = (byte)(V[x] % 10);
+							pc += 2;
+							break;
 
 						// FX55: Stores V0 to VX in memory starting at address I.
+						case 0x55:
+							for (int i = 0; i < V[x]; i++) {
+								memory[I + i] = V[i];
+							}
+							pc += 2;
+							break;
 				
 						// FX65: Fills V0 to VX with values from memory starting at address I.
+						case 0x65:
+							for (int i = 0; i < V[x]; i++) {
+								V[i] = memory[I + i];
+							}
+							pc += 2;
+							break;
 					
 						default:
 							Console.WriteLine("Unknown opcode: 0x{0:X}", opcode);
