@@ -158,7 +158,7 @@ namespace CHIP8_Emulator
 						// 00EE: Returns from a subroutine.
 						case 0x00EE:
 							sp--;
-							pc = stack[sp] + 2; // Go back to the instruction AFTER the one we came from
+							pc = (ushort)(stack[sp] + 2); // Go back to the instruction AFTER the one we came from
 							break;
 					
 						// 0NNN: Calls RCA 1802 program at address NNN. Not necessary for most ROMs.
@@ -352,6 +352,8 @@ namespace CHIP8_Emulator
 				case 0xC000:
 					x = (byte)((opcode & 0x0F00) >> 8);
 					n = (byte)(opcode & 0x00FF);
+					V[x] = (byte)(rng.Next() & n);
+					pc += 2;
 					break;
 				
 				// DXYN: Sprites stored in memory at location in index register (I), 8bits wide.
