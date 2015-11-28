@@ -61,6 +61,15 @@ namespace CHIP8_Emulator
 		{
 			Initialize();
 		}
+		
+		public void ClearScreen()
+		{
+			// Clear Display
+			for (int i = 0; i < gfx.Length; i++)
+			{
+				gfx[i] = 0;
+			}
+		}
 
 		public void Initialize ()
 		{
@@ -71,10 +80,7 @@ namespace CHIP8_Emulator
 			sp      = 0;
 
 			// Clear Display
-			for (int i = 0; i < gfx.Length; i++)
-			{
-				gfx[i] = 0;
-			}
+			ClearScreen ();
 
 			// Clear Stack
 			for (int i = 0; i < stack.Length; i++)
@@ -138,11 +144,26 @@ namespace CHIP8_Emulator
 			
 			switch (opcode & 0xF000)
 			{
-				// 0NNN: Calls RCA 1802 program at address NNN. Not necessary for most ROMs.
-				
-				// 00E0: Clears the screen.
-				
-				// 00EE: Returns from a subroutine.
+				case 0x0000:
+					switch (opcode)
+					{
+						// 00E0: Clears the screen.
+						case 0x00E0:
+							ClearScreen ();
+							break;
+
+						// 00EE: Returns from a subroutine.
+						case 0x00EE:
+							sp--;
+							pc = stack[sp] + 2; // Go back to the instruction AFTER the one we came from
+							break;
+					
+						// 0NNN: Calls RCA 1802 program at address NNN. Not necessary for most ROMs.
+						default:
+							Console.WriteLine("Unknown opcode: 0x{0:X}", opcode);
+							break;
+					}
+					break;
 				
 				// 1NNN: Jumps to address NNN.
 				case 0x1000:
@@ -356,6 +377,7 @@ namespace CHIP8_Emulator
 				//       the middle digit at I plus 1, and the least significant digit at I plus 2.
 
 				// FX55: Stores V0 to VX in memory starting at address I.
+				
 				// FX65: Fills V0 to VX with values from memory starting at address I.
 				
 				// Unknown Opcode
