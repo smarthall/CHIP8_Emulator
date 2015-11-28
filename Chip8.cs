@@ -390,26 +390,64 @@ namespace CHIP8_Emulator
 					}
 					break;
 				
-				// FX07: Sets VX to the value of the delay timer.
+				// FXXX: IO Routines
+				case 0xF000:
+					x = (byte)((opcode & 0x0F00) >> 8);
+					n = (byte)(opcode & 0x00FF);
 				
-				// FX0A: A key press is awaited, and then stored in VX.
+					switch (n) {
+						// FX07: Sets VX to the value of the delay timer.
+						case 0x07:
+							V[x] = delay_timer;
+							pc += 2;
+							break;
 				
-				// FX15: Sets the delay timer to VX.
+						// FX0A: A key press is awaited, and then stored in VX.
 				
-				// FX18: Sets the sound timer to VX.
+						// FX15: Sets the delay timer to VX.
+						case 0x15:
+							delay_timer = V[x];
+							pc += 2;
+							break;
 				
-				// FX1E: Adds VX to I.
+						// FX18: Sets the sound timer to VX.
+						case 0x18:
+							sound_timer = V[x];
+							pc += 2;
+							break;
+					
+						// FX1E: Adds VX to I.
+						case 0x1E:
+							res = I + V[x];
+							if (res > 0xFFF) {
+								V[CARRY_REGISTER] = 1;
+							} else {
+								V[CARRY_REGISTER] = 0;
+							}
+							I = (ushort)res;
+							pc += 2;
+							break;
 				
-				// FX29: Sets I to the location of the sprite for the character in VX.
-				//       Characters 0-F (in hexadecimal) are represented by a 4x5 font.
+						// FX29: Sets I to the location of the sprite for the character in VX.
+						//       Characters 0-F (in hexadecimal) are represented by a 4x5 font.
+						case 0x29:
+							I = V[x] * 5;
+							pc += 2;
+							break;
 				
-				// FX33: Stores the Binary-coded decimal representation of VX,
-				//       with the most significant of three digits at the address in I,
-				//       the middle digit at I plus 1, and the least significant digit at I plus 2.
+						// FX33: Stores the Binary-coded decimal representation of VX,
+						//       with the most significant of three digits at the address in I,
+						//       the middle digit at I plus 1, and the least significant digit at I plus 2.
 
-				// FX55: Stores V0 to VX in memory starting at address I.
+						// FX55: Stores V0 to VX in memory starting at address I.
 				
-				// FX65: Fills V0 to VX with values from memory starting at address I.
+						// FX65: Fills V0 to VX with values from memory starting at address I.
+					
+						default:
+							Console.WriteLine("Unknown opcode: 0x{0:X}", opcode);
+							break;
+					}
+					break;
 				
 				// Unknown Opcode
 				default:
