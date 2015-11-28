@@ -142,6 +142,21 @@ namespace CHIP8_Emulator
 			return gfx_updated;
 		}
 		
+		public void KeyDown(byte key_id)
+		{
+			key[key_id] = 1;
+		}
+		
+		public void KeyUp(byte key_id)
+		{
+			key[key_id] = 0;
+		}
+		
+		public byte[] GetDisplay() {
+			gfx_updated = false;
+			return gfx;
+		}
+		
 		public void Cycle()
 		{
 			byte x, y;
