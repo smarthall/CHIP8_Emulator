@@ -25,6 +25,7 @@ namespace CHIP8_Emulator
 		
 		// The screen
 		private byte[] gfx = new byte[64 * 32];
+		private bool gfx_updated = true;
 		
 		// Timer Registers
 		private byte delay_timer;
@@ -134,6 +135,11 @@ namespace CHIP8_Emulator
 					break;
 				}
 			}
+		}
+		
+		public bool DrawRequired()
+		{
+			return gfx_updated;
 		}
 		
 		public void Cycle()
@@ -363,6 +369,30 @@ namespace CHIP8_Emulator
 				//       Sprites are drawn starting at position VX, VY.
 				//       N is the number of 8bit rows that need to be drawn.
 				//       If N is greater than 1, second line continues at position VX, VY+1, and so on.
+				case 0xD000:
+					x = (byte)((opcode & 0x0F00) >> 8);
+					y = (byte)((opcode & 0x00F0) >> 4);
+					n = (byte)(opcode & 0x000F);
+					byte pixel;
+				
+					V[CARRY_REGISTER] = 0;
+					for (int yline = 0; yline < n; yline++)
+					{
+						pixel = memory[I + yline];
+						for(int xline = 0; xline < 8; xline++)
+						{
+ 							if((pixel & (0x80 >> xline)) != 0)
+							{
+								if(gfx[(x + xline + ((y + yline) * 64))] == 1) V[CARRY_REGISTER] = 1;                                 
+								gfx[x + xline + ((y + yline) * 64)] ^= 1;
+							}
+						}
+					}
+ 					
+					gfx_updated = true;
+					pc += 2;
+				
+					break;
 				
 				// EXXX: Some key dependent routines
 				case 0XE000:
