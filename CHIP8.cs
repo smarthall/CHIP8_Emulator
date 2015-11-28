@@ -2,13 +2,14 @@ using System;
 
 namespace CHIP8_Emulator
 {
-	public class CHIP8
+	public class Chip8
 	{
 		// Constants
-		private const UInt16 LOAD_ADDR = 0x200;
+		private const ushort LOAD_ADDR = 0x200;
+		private const ushort CARRY_REGISTER = 0xF;
 
 		// Current opcode
-		private UInt16 opcode;
+		private ushort opcode;
 		
 		// 4K of RAM
 		private byte[] memory = new byte[4096];
@@ -17,10 +18,10 @@ namespace CHIP8_Emulator
 		private byte[] V = new byte[16];
 		
 		// Index Register
-		private UInt16 I;
+		private ushort I;
 		
 		// Program Counter
-		private UInt16 pc;
+		private ushort pc;
 		
 		// The screen
 		private byte[] gfx = new byte[64 * 32];
@@ -30,7 +31,7 @@ namespace CHIP8_Emulator
 		private byte sound_timer;
 		
 		// Stack
-		private UInt16[] stack = new UInt16[16];
+		private ushort[] stack = new ushort[16];
 		private byte sp;
 		
 		// Key Inputs
@@ -56,12 +57,12 @@ namespace CHIP8_Emulator
 		  0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 		};
 
-		public CHIP8 ()
+		public Chip8 ()
 		{
-			initialize();
+			Initialize();
 		}
 
-		public void initialize ()
+		public void Initialize ()
 		{
 			// Init core registers
 			pc      = LOAD_ADDR; // this is where CHIP8 loads programs
@@ -104,13 +105,13 @@ namespace CHIP8_Emulator
 			sound_timer = 0;
 		}
 		
-		public void load(string filename)
+		public void Load(string filename)
 		{
 			// Open the file
 			System.IO.BinaryReader file = new System.IO.BinaryReader(System.IO.File.Open(filename, System.IO.FileMode.Open));
 			
 			// Start loading at LOAD_ADDR
-			UInt16 offset = LOAD_ADDR;
+			ushort offset = LOAD_ADDR;
 			
 			// Load Byte for Byte
 			while (true)
@@ -126,30 +127,236 @@ namespace CHIP8_Emulator
 			}
 		}
 		
-		public void cycle()
+		public void Cycle()
 		{
+			byte x, y;
+			ushort n;
+			int res;
+			
 			// Fetch the opcode
-			opcode = (UInt16)(memory[pc] << 8 | memory[pc + 1]);
+			opcode = (ushort)(memory[pc] << 8 | memory[pc + 1]);
 			
 			switch (opcode & 0xF000)
 			{
-
+				// 0NNN: Calls RCA 1802 program at address NNN. Not necessary for most ROMs.
+				
+				// 00E0: Clears the screen.
+				
+				// 00EE: Returns from a subroutine.
+				
 				// 1NNN: Jumps to address NNN.
 				case 0x1000:
-					pc = (UInt16)(opcode & 0x0FFF);
+					pc = (ushort)(opcode & 0x0FFF);
 					break;
 				
 				// 2NNN: Calls subroutine at NNN.
 				case 0x2000:
 					stack[sp++] = pc;
-					pc = (UInt16)(opcode & 0x0FFF);
+					pc = (ushort)(opcode & 0x0FFF);
+					break;
+				
+				// 3XNN: Skips the next instruction if VX equals NN.
+				case 0x3000:
+					x = (byte)((opcode & 0x0F00) >> 8);
+					n = (ushort)(opcode & 0x00FF);
+					if (V[x] == n) {
+						pc += 4;
+					} else {
+						pc += 2;
+					}
+					break;
+				
+				// 4XNN: Skips the next instruction if VX doesn't equal NN.
+				case 0x4000:
+					x = (byte)((opcode & 0x0F00) >> 8);
+					n = (ushort)(opcode & 0x00FF);
+					if (V[x] != n) {
+						pc += 4;
+					} else {
+						pc += 2;
+					}
+					break;
+				
+				// 5XY0: Skips the next instruction if VX equals VY.
+				case 0x5000:
+					x = (byte)((opcode & 0x0F00) >> 8);
+					y = (byte)((opcode & 0x00F0) >> 4);
+					if (V[x] == V[y]) {
+						pc += 4;
+					} else {
+						pc += 2;
+					}
+					break;
+				
+				// 6XNN: Sets VX to NN.
+				case 0x6000:
+					x = (byte)((opcode & 0x0F00) >> 8);
+					n = (ushort)(opcode & 0x00FF);
+					V[x] = (byte)n;
+					pc += 2;
+					break;
+				
+				// 7XNN: Adds NN to VX.
+				case 0x7000:
+					x = (byte)((opcode & 0x0F00) >> 8);
+					n = (ushort)(opcode & 0x00FF);
+					res = V[x] + n;
+					if (res > byte.MaxValue) {
+						V[x] = (byte)(res - byte.MaxValue);
+						V[CARRY_REGISTER] = 1;
+					} else {
+						V[x] = (byte)(res);
+						V[CARRY_REGISTER] = 0;
+					}
+					pc += 2;
+					break;
+				
+				// 8XXX: Various Register operations
+				case 0x8000:
+					// Get the two registers
+					x = (byte)((opcode & 0x0F00) >> 8);
+					y = (byte)((opcode & 0x00F0) >> 4);
+
+					switch (opcode & 0x000F)
+					{
+						// 8XY0: Sets VX to the value of VY.
+						case 0x0:
+							V[x] = V[y];
+							pc += 2;
+							break;
+					
+						// 8XY1: Sets VX to VX or VY.
+						case 0x1:
+							V[x] = (byte)(V[x] | V[y]);
+							pc += 2;
+							break;
+					
+						// 8XY2: Sets VX to VX and VY.
+						case 0x2:
+							V[x] = (byte)(V[x] & V[y]);
+							pc += 2;
+							break;
+					
+						// 8XY3: Sets VX to VX xor VY.
+						case 0x3:
+							V[x] = (byte)(V[x] ^ V[y]);
+							pc += 2;
+							break;
+					
+						// 8XY4: Adds VY to VX. VF is set to 1 when there's a carry, and to 0 when there isn't.
+						case 0x4:
+							res = V[x] + V[y];
+							if (res > byte.MaxValue) {
+								V[x] = (byte)(res - byte.MaxValue);
+								V[CARRY_REGISTER] = 1;
+							} else {
+								V[x] = (byte)(res);
+								V[CARRY_REGISTER] = 0;
+							}
+							pc += 2;
+							break;
+					
+						// 8XY5: VY is subtracted from VX. VF is set to 0 when there's a borrow, and 1 when there isn't.
+						case 0x5:
+							res = V[x] - V[y];
+							if (res < byte.MinValue) {
+								V[x] = (byte)(res + byte.MaxValue);
+								V[CARRY_REGISTER] = 0;
+							} else {
+								V[x] = (byte)(res);
+								V[CARRY_REGISTER] = 1;
+							}
+							pc += 2;
+							break;
+					
+						// 8XY6: Shifts VX right by one. VF is set to the value of the least significant bit of VX before the shift.
+						case 0x6:
+							V[CARRY_REGISTER] = (byte)(V[x] & 0x01);
+							V[x] = (byte)(V[x] << 1);
+							pc += 2;
+							break;
+					
+						// 8XY7: Sets VX to VY minus VX. VF is set to 0 when there's a borrow, and 1 when there isn't.
+						case 0x7:
+							res = V[y] - V[x];
+							if (res < byte.MinValue) {
+								V[x] = (byte)(res + byte.MaxValue);
+								V[CARRY_REGISTER] = 0;
+							} else {
+								V[x] = (byte)(res);
+								V[CARRY_REGISTER] = 1;
+							}
+							pc += 2;
+							break;
+					
+						// 8XYE: Shifts VX left by one. VF is set to the value of the most significant bit of VX before the shift.
+						case 0xE:
+							V[CARRY_REGISTER] = (byte)((V[x] & 0x80) >> 8);
+							V[x] = (byte)(V[x] >> 1);
+							pc += 2;
+							break;
+					
+						default:
+							Console.WriteLine("Unknown opcode: 0x{0:X}", opcode);
+							break;
+					}
+					break;
+				
+				// 9XY0: Skips the next instruction if VX doesn't equal VY.
+				case 0x9000:
+					x = (byte)((opcode & 0x0F00) >> 8);
+					y = (byte)((opcode & 0x00F0) >> 4);
+					if (V[x] == V[y]) {
+						pc += 4;
+					} else {
+						pc += 2;
+					}
 					break;
 				
 				// ANNN: Sets I to the address NNN.
 				case 0xA000:
-					I = (UInt16)(opcode & 0x0FFF);
+					I = (ushort)(opcode & 0x0FFF);
 					pc += 2;
 					break;
+				
+				// BNNN: Jumps to the address NNN plus V0.
+				case 0xB000:
+					pc = (ushort)((opcode & 0x0FFF) + V[0]);
+					break;
+				
+				// CXNN: Sets VX to the result of a bitwise and operation on a random number and NN.
+				
+				// DXYN: Sprites stored in memory at location in index register (I), 8bits wide.
+				//       Wraps around the screen.
+				//       If when drawn, clears a pixel, register VF is set to 1 otherwise it is zero.
+				//       All drawing is XOR drawing (i.e. it toggles the screen pixels).
+				//       Sprites are drawn starting at position VX, VY.
+				//       N is the number of 8bit rows that need to be drawn.
+				//       If N is greater than 1, second line continues at position VX, VY+1, and so on.
+				
+				// EX9E: Skips the next instruction if the key stored in VX is pressed.
+				
+				// EXA1: Skips the next instruction if the key stored in VX isn't pressed.
+				
+				// FX07: Sets VX to the value of the delay timer.
+				
+				// FX0A: A key press is awaited, and then stored in VX.
+				
+				// FX15: Sets the delay timer to VX.
+				
+				// FX18: Sets the sound timer to VX.
+				
+				// FX1E: Adds VX to I.
+				
+				// FX29: Sets I to the location of the sprite for the character in VX.
+				//       Characters 0-F (in hexadecimal) are represented by a 4x5 font.
+				
+				// FX33: Stores the Binary-coded decimal representation of VX,
+				//       with the most significant of three digits at the address in I,
+				//       the middle digit at I plus 1, and the least significant digit at I plus 2.
+
+				// FX55: Stores V0 to VX in memory starting at address I.
+				// FX65: Fills V0 to VX with values from memory starting at address I.
 				
 				// Unknown Opcode
 				default:
@@ -159,7 +366,10 @@ namespace CHIP8_Emulator
 			
 			// Update timers
 			if (delay_timer > 0) delay_timer--;
-			if (sound_timer > 0) sound_timer--;
+			if (sound_timer > 0) {
+				if (sound_timer == 1) Console.Beep();
+				sound_timer--;
+			}
 		}
 	}
 }
