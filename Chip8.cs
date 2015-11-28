@@ -56,6 +56,9 @@ namespace CHIP8_Emulator
 		  0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
 		  0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 		};
+		
+		// Random numbers
+		private Random rng = new Random();
 
 		public Chip8 ()
 		{
@@ -346,6 +349,10 @@ namespace CHIP8_Emulator
 					break;
 				
 				// CXNN: Sets VX to the result of a bitwise and operation on a random number and NN.
+				case 0xC000:
+					x = (byte)((opcode & 0x0F00) >> 8);
+					n = (byte)(opcode & 0x00FF);
+					break;
 				
 				// DXYN: Sprites stored in memory at location in index register (I), 8bits wide.
 				//       Wraps around the screen.
