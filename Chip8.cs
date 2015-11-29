@@ -167,6 +167,7 @@ namespace CHIP8_Emulator
 			
 			// Fetch the opcode
 			opcode = (ushort)(memory[pc] << 8 | memory[pc + 1]);
+			Console.WriteLine("OPCODE: {0:X}", opcode);
 			
 			switch (opcode & 0xF000)
 			{
@@ -294,12 +295,11 @@ namespace CHIP8_Emulator
 						case 0x4:
 							res = V[x] + V[y];
 							if (res > byte.MaxValue) {
-								V[x] = (byte)(res - byte.MaxValue);
 								V[CARRY_REGISTER] = 1;
 							} else {
-								V[x] = (byte)(res);
 								V[CARRY_REGISTER] = 0;
 							}
+							V[x] = (byte)(res);
 							pc += 2;
 							break;
 					
@@ -307,12 +307,11 @@ namespace CHIP8_Emulator
 						case 0x5:
 							res = V[x] - V[y];
 							if (res < byte.MinValue) {
-								V[x] = (byte)(res + byte.MaxValue);
 								V[CARRY_REGISTER] = 0;
 							} else {
-								V[x] = (byte)(res);
 								V[CARRY_REGISTER] = 1;
 							}
+							V[x] = (byte)(res);
 							pc += 2;
 							break;
 					
@@ -390,6 +389,8 @@ namespace CHIP8_Emulator
 					x = (byte)((opcode & 0x0F00) >> 8);
 					y = (byte)((opcode & 0x00F0) >> 4);
 					n = (byte)(opcode & 0x000F);
+				
+					Console.WriteLine ("Drawing sprite from 0x{0:X} at ({1}, {2})", I, V[x], V[y]);
 				
 					byte pixel;
 				
@@ -518,7 +519,7 @@ namespace CHIP8_Emulator
 
 						// FX55: Stores V0 to VX in memory starting at address I.
 						case 0x55:
-							for (int i = 0; i < V[x]; i++) {
+							for (int i = 0; i <= x; i++) {
 								memory[I + i] = V[i];
 							}
 							pc += 2;
@@ -526,7 +527,7 @@ namespace CHIP8_Emulator
 				
 						// FX65: Fills V0 to VX with values from memory starting at address I.
 						case 0x65:
-							for (int i = 0; i < x; i++) {
+							for (int i = 0; i <= x; i++) {
 								V[i] = memory[I + i];
 							}
 							pc += 2;

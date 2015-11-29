@@ -14,7 +14,7 @@ public partial class MainWindow: Gtk.Window
 	// Display settings
 	private const int SCREEN_WIDTH  = 64;
 	private const int SCREEN_HEIGHT = 32;
-	private const int SCREEN_ZOOM   = 4;
+	private const int SCREEN_ZOOM   = 8;
 	
 	// Display
 	DrawingArea da;
@@ -26,7 +26,7 @@ public partial class MainWindow: Gtk.Window
 		
 		// Setup Emulator
 		emulator = new CHIP8_Emulator.Chip8();
-		emulator.Load("../../ROMS/INVADERS");
+		emulator.Load("../../ROMS/PONG");
 		
 		// Register our timer function
 		hiResTimer.MicroTimerElapsed += new MicroTimer.MicroTimerElapsedEventHandler(hiResTick);
@@ -47,7 +47,7 @@ public partial class MainWindow: Gtk.Window
 		Gdk.Window window = ev.Window;
 		
 		using (Graphics g = Gtk.DotNet.Graphics.FromDrawable(window)) {
-			g.DrawImage((System.Drawing.Image)screen, new Rectangle(0, 0, 320,160));
+			g.DrawImage((System.Drawing.Image)screen, new Rectangle(0, 0, SCREEN_WIDTH * SCREEN_ZOOM, SCREEN_HEIGHT * SCREEN_ZOOM));
 		}
 	}
 	
