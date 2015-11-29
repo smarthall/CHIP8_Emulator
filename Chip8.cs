@@ -73,6 +73,8 @@ namespace CHIP8_Emulator
 			{
 				gfx[i] = 0;
 			}
+			
+			gfx_updated = true;
 		}
 
 		public void Initialize ()
@@ -388,6 +390,7 @@ namespace CHIP8_Emulator
 					x = (byte)((opcode & 0x0F00) >> 8);
 					y = (byte)((opcode & 0x00F0) >> 4);
 					n = (byte)(opcode & 0x000F);
+				
 					byte pixel;
 				
 					V[CARRY_REGISTER] = 0;
@@ -398,8 +401,8 @@ namespace CHIP8_Emulator
 						{
  							if((pixel & (0x80 >> xline)) != 0)
 							{
-								if(gfx[(x + xline + ((y + yline) * 64))] == 1) V[CARRY_REGISTER] = 1;                                 
-								gfx[x + xline + ((y + yline) * 64)] ^= 1;
+								if(gfx[(V[x] + xline + ((V[y] + yline) * 64))] == 1) V[CARRY_REGISTER] = 1;                                 
+								gfx[V[x] + xline + ((V[y] + yline) * 64)] ^= 1;
 							}
 						}
 					}
