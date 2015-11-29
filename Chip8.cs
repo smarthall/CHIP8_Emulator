@@ -526,7 +526,7 @@ namespace CHIP8_Emulator
 				
 						// FX65: Fills V0 to VX with values from memory starting at address I.
 						case 0x65:
-							for (int i = 0; i < V[x]; i++) {
+							for (int i = 0; i < x; i++) {
 								V[i] = memory[I + i];
 							}
 							pc += 2;

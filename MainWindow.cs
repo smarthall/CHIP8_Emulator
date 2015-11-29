@@ -26,7 +26,7 @@ public partial class MainWindow: Gtk.Window
 		
 		// Setup Emulator
 		emulator = new CHIP8_Emulator.Chip8();
-		emulator.Load("../../ROMS/PONG");
+		emulator.Load("../../ROMS/INVADERS");
 		
 		// Register our timer function
 		hiResTimer.MicroTimerElapsed += new MicroTimer.MicroTimerElapsedEventHandler(hiResTick);
