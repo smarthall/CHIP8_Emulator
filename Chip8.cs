@@ -167,7 +167,6 @@ namespace CHIP8_Emulator
 			
 			// Fetch the opcode
 			opcode = (ushort)(memory[pc] << 8 | memory[pc + 1]);
-			Console.WriteLine("OPCODE: {0:X}", opcode);
 			
 			switch (opcode & 0xF000)
 			{
@@ -249,6 +248,7 @@ namespace CHIP8_Emulator
 					x = (byte)((opcode & 0x0F00) >> 8);
 					n = (ushort)(opcode & 0x00FF);
 					res = V[x] + n;
+				
 					if (res > byte.MaxValue) {
 						V[x] = (byte)(res - byte.MaxValue);
 						V[CARRY_REGISTER] = 1;
@@ -389,9 +389,7 @@ namespace CHIP8_Emulator
 					x = (byte)((opcode & 0x0F00) >> 8);
 					y = (byte)((opcode & 0x00F0) >> 4);
 					n = (byte)(opcode & 0x000F);
-				
-					Console.WriteLine ("Drawing sprite from 0x{0:X} at ({1}, {2})", I, V[x], V[y]);
-				
+
 					byte pixel;
 				
 					V[CARRY_REGISTER] = 0;
@@ -513,7 +511,7 @@ namespace CHIP8_Emulator
 						case 0x33:
 							memory[I]     = (byte)(V[x] / 100);
 							memory[I + 1] = (byte)(V[x] % 100 / 10);
-							memory[I + 1] = (byte)(V[x] % 10);
+							memory[I + 2] = (byte)(V[x] % 10);
 							pc += 2;
 							break;
 
