@@ -19,12 +19,19 @@ public partial class MainWindow: Gtk.Window
 	// Display
 	DrawingArea da;
 	Bitmap screen = new Bitmap(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+	/*
+	 * 1 2 3 4     1 2 3 C
+	 * Q W E R __\ 4 5 6 D
+	 * A S D F   / 7 8 9 E
+	 * Z X C V     A 0 B F
+	 */
 	
 	private uint[] keymap = {
-		49,   50,  51,  52,
-		113, 119, 101, 114,
-		97,  115, 100, 102,
-		122, 120,  99, 118,
+		120, 49, 50, 51,
+		113, 119, 101, 97,
+		115, 100, 122, 99,
+		52, 114, 102, 118,
 	};
 
 	public MainWindow (): base (Gtk.WindowType.Toplevel)
@@ -33,7 +40,7 @@ public partial class MainWindow: Gtk.Window
 		
 		// Setup Emulator
 		emulator = new CHIP8_Emulator.Chip8();
-		emulator.Load("../../ROMS/PONG");
+		emulator.Load("../../ROMS/PONG2");
 		
 		// Register our timer function
 		hiResTimer.MicroTimerElapsed += new MicroTimer.MicroTimerElapsedEventHandler(hiResTick);
@@ -91,15 +98,11 @@ public partial class MainWindow: Gtk.Window
 	
 	private byte GetKeyFromMap(uint KeyValue)
 	{
-		byte i;
-
-		for (i = 0; i < keymap.Length; i++) {
+		for (byte i = 0; i < keymap.Length; i++) {
 			if (KeyValue == keymap[i]) {
-				break;
+				return i;
 			}
 		}
-
-		return i;
 	}
 
 	protected override bool OnKeyPressEvent (Gdk.EventKey evnt)
