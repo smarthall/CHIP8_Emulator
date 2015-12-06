@@ -103,18 +103,24 @@ public partial class MainWindow: Gtk.Window
 				return i;
 			}
 		}
+		
+		return 255;
 	}
 
 	protected override bool OnKeyPressEvent (Gdk.EventKey evnt)
 	{
-		emulator.KeyDown(GetKeyFromMap(evnt.KeyValue));
+		byte KeyValue = GetKeyFromMap(evnt.KeyValue);
+		
+		if (KeyValue != 255) emulator.KeyDown(KeyValue);
 
 		return base.OnKeyPressEvent (evnt);
 	}
 
 	protected override bool OnKeyReleaseEvent (Gdk.EventKey evnt)
 	{
-		emulator.KeyUp(GetKeyFromMap(evnt.KeyValue));
+		byte KeyValue = GetKeyFromMap(evnt.KeyValue);
+		
+		if (KeyValue != 255) emulator.KeyUp(KeyValue);
 
 		return base.OnKeyReleaseEvent (evnt);
 	}
