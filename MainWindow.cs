@@ -20,6 +20,13 @@ public partial class MainWindow: Gtk.Window
 	DrawingArea da;
 	Bitmap screen = new Bitmap(SCREEN_WIDTH, SCREEN_HEIGHT);
 	
+	private uint[] keymap = {
+		49,   50,  51,  52,
+		113, 119, 101, 114,
+		97,  115, 100, 102,
+		122, 120,  99, 118,
+	};
+
 	public MainWindow (): base (Gtk.WindowType.Toplevel)
 	{
 		Build ();
@@ -82,13 +89,30 @@ public partial class MainWindow: Gtk.Window
 		a.RetVal = true;
 	}
 	
+	private byte GetKeyFromMap(uint KeyValue)
+	{
+		byte i;
+
+		for (i = 0; i < keymap.Length; i++) {
+			if (KeyValue == keymap[i]) {
+				break;
+			}
+		}
+
+		return i;
+	}
+
 	protected override bool OnKeyPressEvent (Gdk.EventKey evnt)
 	{
+		emulator.KeyDown(GetKeyFromMap(evnt.KeyValue));
+
 		return base.OnKeyPressEvent (evnt);
 	}
 
 	protected override bool OnKeyReleaseEvent (Gdk.EventKey evnt)
 	{
+		emulator.KeyUp(GetKeyFromMap(evnt.KeyValue));
+
 		return base.OnKeyReleaseEvent (evnt);
 	}
 }
